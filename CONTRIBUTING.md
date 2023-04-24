@@ -1,57 +1,108 @@
+© Copyright 2022, Intel Corporation
+
 # Contributing
 
-### License
+First off, thanks for taking the time to contribute! ❤️
 
-<PROJECT NAME> is licensed under the terms in [LICENSE]<link to license file in repo>. By contributing to the project, you agree to the license and copyright terms therein and release your contribution under these terms.
+All types of contributions are encouraged and valued.  
 
-### Sign your work
+## I Have a question or want to report a bug  
 
-Please use the sign-off line at the end of the patch. Your signature certifies that you wrote the patch or otherwise have the right to pass it on as an open-source patch. The rules are pretty simple: if you can certify
-the below (from [developercertificate.org](http://developercertificate.org/)):
+Before you ask a question, it is best to search for existing **Issues** that might help you. In case you have found a suitable issue and still need clarification, you can write your question in this issue. It is also advisable to search the internet for answers first.
 
-```
-Developer Certificate of Origin
-Version 1.1
+If you then still feel the need to ask a question and need clarification, we recommend the following:
 
-Copyright (C) 2004, 2006 The Linux Foundation and its contributors.
-660 York Street, Suite 102,
-San Francisco, CA 94110 USA
+- Open an Issue
+- Provide as much context as you can about what you're running into.  
+- We reply to the Issue as soon as possible.
 
-Everyone is permitted to copy and distribute verbatim copies of this
-license document, but changing it is not allowed.
+## I Want To Contribute - Fork and PR Process
 
-Developer's Certificate of Origin 1.1
+Legal Notice: When contributing to this project, you must agree that you have authored 100% of the content, that you have the necessary rights to the content and that the content you contribute may be provided under the project license.
 
-By making a contribution to this project, I certify that:
+**PLEASE ALWAYS START WITH A GITHUB ISSUE AND DICUSSION**
 
-(a) The contribution was created in whole or in part by me and I
-    have the right to submit it under the open source license
-    indicated in the file; or
+### Fork and code development  
 
-(b) The contribution is based upon previous work that, to the best
-    of my knowledge, is covered under an appropriate open source
-    license and I have the right under that license to submit that
-    work with modifications, whether created in whole or in part
-    by me, under the same open source license (unless I am
-    permitted to submit under a different license), as indicated
-    in the file; or
+1. If you are new to Git and GitHub, it is advisable that you go through
+    [GitHub For Beginners](http://readwrite.com/2013/09/30/understanding-github-a-journey-for-beginners-part-1/)
+    **before** moving to Step 2.
 
-(c) The contribution was provided directly to me by some other
-    person who certified (a), (b) or (c) and I have not modified
-    it.
+2. Fork the project on GitHub.
+    [Help Guide to Fork a Repository](https://help.github.com/en/articles/fork-a-repo/).
 
-(d) I understand and agree that this project and the contribution
-    are public and that a record of the contribution (including all
-    personal information I submit with it, including my sign-off) is
-    maintained indefinitely and may be redistributed consistent with
-    this project or the open source license(s) involved.
-```
+3. Clone the project.
+    [Help Guide to Clone a Repository](https://help.github.com/en/articles/cloning-a-repository)
 
-Then you just add a line to every git commit message:
+4. Create a branch specific to the issue you are working on.
 
-    Signed-off-by: Joe Smith <joe.smith@email.com>
+    ```shell
+    git checkout -b update-readme-file
+    ```
 
-Use your real name (sorry, no pseudonyms or anonymous contributions.)
+    For clarity, name
+    your branch `update-xxx` or `fix-xxx`. The `xxx` is a short
+    description of the changes you're making. Examples include `update-readme` or
+    `fix-typo-on-contribution-md`.
 
-If you set your `user.name` and `user.email` git configs, you can sign your
-commit automatically with `git commit -s`.
+5. Open up the project in your favorite text editor, select the file you want
+    to contribute to, and make your changes.
+
+    If you are making changes to the `README.md` file, you would need to have
+    Markdown knowledge. Visit
+    [here to read about GitHub Markdown](https://guides.github.com/features/mastering-markdown/)
+    and
+    [here to practice](http://www.markdowntutorial.com/).
+
+    - If you are adding a new project/organization to the README, make sure
+        it's listed in alphabetical order.
+    - If you are adding a new organization, make sure you add an organization
+        label to the organization name. This would help distinguish projects
+        from organizations.
+
+6. Add your modified
+    files to Git, [How to Add, Commit, Push, and Go](http://readwrite.com/2013/10/02/github-for-beginners-part-2/).
+
+    ```shell
+    git add path/to/filename.ext
+    ```
+
+    You can also add all unstaged files using:
+
+    ```shell
+    git add .
+    ```
+
+    **Note:** using a `git add .` will automatically add all files. You can do a
+    `git status` to see your changes, but do it **before** `git add`.
+
+7. Commit your changes using a descriptive commit message.
+
+    ```shell
+    git commit -m "Brief Description of Commit"
+    ```
+
+8. Push your commits to your GitHub Fork:
+
+    ```shell
+    git push -u origin branch-name
+    ```
+
+9. Submit a pull request.
+
+    Within GitHub, visit this main repository and you should see a banner
+    suggesting that you make a pull request. While you're writing up the pull
+    request, you can add `Closes #XXX` in the message body where `#XXX` is the
+    issue you're fixing. Therefore, an example would be `Closes #42` would close issue
+    `#42`.
+
+### Submitting a Pull Request
+
+[What is a Pull Request?](https://yangsu.github.io/pull-request-tutorial/)
+
+When fixing an issue, please include the issue number `Fixes #16` on the description of the PR.  
+
+## Attribution  
+
+This guide is based on the **contributing-gen**. [Make your own](https://github.com/bttger/contributing-gen)!
+And <https://github.com/freeCodeCamp/how-to-contribute-to-open-source/blob/main/CONTRIBUTING.md>
