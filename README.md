@@ -2,12 +2,12 @@
   <img src="assets/logo-classicblue-800px.png" alt="Intel Logo" width="250"/>
 </p>
 
-# Intel® Cloud Optimization Modules for Kubeflow
+# Intel® Cloud Optimization Modules for Microsoft Azure
 
 © Copyright 2023, Intel Corporation
 
-## Microsoft Azure
+This repository contains reference architectures designed to facilitate building and deploying scalable, cloud-native applications that are optimized for use on the Azure cloud.
 
-This module can be used to build and deploy a scalable, distributed training pipeline of a computer vision (CV) application using Kubeflow on the Azure cloud.
-
-## Usage
+## Modules
+- **[Azure Kubernetes Services (AKS) XGBoost Pipeline](kubernetes/README.md)**
+- **[Azure Kubeflow XGBoost Pipeline](kubeflow/pipelines/XGBoost/README.md)**
