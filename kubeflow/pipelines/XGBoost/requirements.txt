@@ -1,0 +1,8 @@
+daal4py
+joblib
+loguru
+numpy
+pandas
+scikit-learn
+scikit-learn-intelex
+xgboost

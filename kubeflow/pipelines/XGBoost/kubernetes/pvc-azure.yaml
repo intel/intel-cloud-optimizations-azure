@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-azure-file
+  namespace: kubeflow-user-example-com
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: azurefile-csi
+  volumeName: pv-azure-file
+  resources:
+    requests:
+      storage: 20Gi
