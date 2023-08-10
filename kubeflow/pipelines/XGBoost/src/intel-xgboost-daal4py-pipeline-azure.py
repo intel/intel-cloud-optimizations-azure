@@ -1,62 +1,41 @@
-import kfp
 from kfp import dsl
 from kfp import compiler
-from kfp.v2.dsl import (component, Input, Output, Dataset, Model,
-                        Metrics, ClassificationMetrics)
-from kubernetes import client as k8s_client
+from kfp import kubernetes
+from kfp.dsl import (Input, Output, Dataset, Model, Metrics, ClassificationMetrics)
 
-intel_xgb_d4p_image = "kubeflowregistry.azurecr.io/intel-xgboost-daal4py:latest"
-vol_name = "pv-azure-file"
-vol_mount_path = "/mnt/azure-file-share"
-pvc = k8s_client.V1PersistentVolumeClaimVolumeSource(claim_name="pvc-azure-file")
-volume = k8s_client.V1Volume(name=vol_name, persistent_volume_claim=pvc)
-volume_mount = k8s_client.V1VolumeMount(mount_path=vol_mount_path, name=vol_name) 
+intel_xgb_d4p_image = "azurekubeflowregistry.azurecr.io/intel-xgboost-daal4py:latest"
 
-# SGX node affinity
-sgx_node_affinity = k8s_client.V1Affinity(
-    node_affinity = k8s_client.V1NodeAffinity(
-        required_during_scheduling_ignored_during_execution = k8s_client.V1NodeSelector(
-            node_selector_terms = [k8s_client.V1NodeSelectorTerm(
-                match_expressions = [k8s_client.V1NodeSelectorRequirement(
-                    key='agentpool', operator='In', values=['intelsgx'])])])))
-
-@component(base_image=intel_xgb_d4p_image)
+@dsl.component(base_image = intel_xgb_d4p_image)
 def load_data(
-    az_mount_path: str,
-    data_directory: str,
+    data_url: str, 
     data_size: int, 
-    credit_risk_dataset: Output[Dataset]
-):
-    
-    """
-    Loads credit_risk_dataset.csv file from Azure File Share and generates  
+    credit_risk_dataset: Output[Dataset]):
+
+    '''
+    Downloads credit_risk_dataset.csv file and generates  
     additional synthetic data for benchmarking and testing purposes.
     
     Input Parameters
     ----------------
-    az_mount_path : str
-        volume mount path to azure file share
-    data_directory : str
-        directory in azure file share where csv file is stored
+    data_url : str
+        url where the dataset is hosted
     data_size : int
-        size of final dataset desired, default 1M rows
+        size of final dataset desired
     
     Output Artifacts
     ----------------
     credit_risk_dataset : Dataset
-        data that has been synthetically augmented or loaded from azure file share 
-    """ 
-    
-    import os
+        data that has been synthetically augmented or loaded from URL provided
+    '''
+
     import numpy as np
     import pandas as pd
     from loguru import logger
     
-    logger.info("Loading data from Azure file share {} directory...", data_directory)
-    file_path = os.path.join(az_mount_path, data_directory, "credit_risk_dataset.csv")
-    data = pd.read_csv(file_path)
+    logger.info("Loading csv from {}", data_url)
+    data = pd.read_csv(data_url)
     logger.info("Done!")
-    
+
     # number of rows to generate
     if data_size < data.shape[0]:
         pass
@@ -137,19 +116,18 @@ def load_data(
         data = data.drop_duplicates()
         assert len(data) == data_size
         data.reset_index(drop = True)
-    
+
     data.to_csv(credit_risk_dataset.path, index = None)
 
-@component(base_image=intel_xgb_d4p_image)
+@dsl.component(base_image = intel_xgb_d4p_image)
 def create_train_test_set(
     data: Input[Dataset],
-    x_train_data: Output[Dataset],
+    x_train_data: Output[Dataset], 
     y_train_data: Output[Dataset],
     x_test_data: Output[Dataset],
-    y_test_data: Output[Dataset]
-):
-    
-    """
+    y_test_data: Output[Dataset]):
+
+    '''
     Creates 75:25 split of input dataset for model evaluation.
     
     Input Artifacts
@@ -167,24 +145,25 @@ def create_train_test_set(
         test features, 25% of original dataset
     y_test_data : Dataset
         test labels of target variable, loan_status
-    """ 
-    
+    '''
+
     import pandas as pd
     from loguru import logger
     from sklearn.model_selection import train_test_split
-    
+
     data = pd.read_csv(data.path)
-    
+
     logger.info("Creating training and test sets...")
     train, test = train_test_split(data, test_size = 0.25, random_state = 0)
-    
+
     X_train = train.drop(["loan_status"], axis = 1)
     y_train = train["loan_status"]
     
     X_test = test.drop(["loan_status"], axis = 1)
     y_test = test["loan_status"]
     
-    logger.info("X_train size: {}, y_train size: {}\n" \
+    logger.info("Training and test sets created.\n" \
+                "X_train size: {}, y_train size: {}\n" \
                 "X_test size: {}, y_test size: {}", 
                 X_train.shape, y_train.shape, X_test.shape, y_test.shape)
     
@@ -193,15 +172,14 @@ def create_train_test_set(
     X_test.to_csv(x_test_data.path, index = False)
     y_test.to_csv(y_test_data.path, index = False, header = None)
 
-@component(base_image=intel_xgb_d4p_image)
+@dsl.component(base_image = intel_xgb_d4p_image)
 def preprocess_features(
     x_train: Input[Dataset],
-    x_test: Input[Dataset],
+    x_test: Input[Dataset], 
     x_train_processed: Output[Dataset],
-    x_test_processed: Output[Dataset]
-):
-    
-    """
+    x_test_processed: Output[Dataset]):
+
+    '''
     Performs data preprocessing of training and test features.
     
     Input Artifacts
@@ -216,9 +194,9 @@ def preprocess_features(
     x_train_processed : Dataset
         processed and scaled training features
     x_test_processed : Dataset
-        processed and scaled test features  
-    """ 
-    
+        processed and scaled test features 
+    '''
+
     import pandas as pd    
     from sklearn.compose import ColumnTransformer
     from sklearn.impute import SimpleImputer
@@ -227,7 +205,7 @@ def preprocess_features(
     
     X_train = pd.read_csv(x_train.path)
     X_test = pd.read_csv(x_test.path)
-    
+
     # data processing pipeline
     num_imputer = Pipeline(steps=[("imputer", SimpleImputer(strategy = "median"))])
     pow_transformer = PowerTransformer()
@@ -270,30 +248,14 @@ def preprocess_features(
     X_train.to_csv(x_train_processed.path, index = False, header = None)
     X_test.to_csv(x_test_processed.path, index = False, header = None)
 
-@component(base_image=intel_xgb_d4p_image)
+@dsl.component(base_image = intel_xgb_d4p_image)
 def train_xgboost_model(
-    az_mount_path: str,
-    model_directory: str,
-    model_name: str,
-    continue_training: bool,
     x_train: Input[Dataset],
-    y_train: Input[Dataset],
-    xgb_model: Output[Model]
-):
-    
-    """
-    Trains an XGBoost classification model and stores model in Azure file share.
+    y_train: Input[Dataset], 
+    xgb_model: Output[Model]):
 
-    Input Parameters
-    ----------------
-    az_mount_path : str
-        volume mount path to azure file share
-    model_directory : str
-        directory in azure file share to store model
-    model_name : str
-        name of model object to be trained
-    continue_training : bool
-        xgboost model parameter for training continuation
+    '''
+    Trains an XGBoost classification model.
     
     Input Artifacts
     ---------------
@@ -305,10 +267,9 @@ def train_xgboost_model(
     Output Artifacts
     ----------------
     xgb_model : Model
-        trained XGBoost model  
-    """
-    
-    import os
+        trained XGBoost model
+    '''
+
     import joblib
     import pandas as pd
     import xgboost as xgb
@@ -316,9 +277,10 @@ def train_xgboost_model(
     
     X_train = pd.read_csv(x_train.path, header = None)
     y_train = pd.read_csv(y_train.path, header = None)
-    
+
     dtrain = xgb.DMatrix(X_train.values, y_train.values)
     
+    # define model parameters
     params = {
         "objective": "binary:logistic",
         "eval_metric": "logloss",
@@ -331,44 +293,21 @@ def train_xgboost_model(
         "verbosity": 1
     }
     
-    az_model_path = os.path.join(az_mount_path, model_directory, model_name+'.joblib')
-    
-    # train initial XGBoost model
-    if continue_training == False: 
-        logger.info("Training initial {} model...", model_name)
-        clf = xgb.train(params = params, 
-                        dtrain = dtrain, 
-                        num_boost_round = 500)
-    # continue training XGBoost model
-    else:
-        logger.info("Loading {} model from {} directory...", model_name, model_directory)
-        try: 
-            model = joblib.load(az_model_path)
-            logger.info("Continuing {} training...", model_name)
-            clf = xgb.train(
-                params = params, 
-                dtrain = dtrain, 
-                xgb_model = model, 
-                num_boost_round = 500)
-        except:
-            logger.info("{} model not found in the {} directory.", model_name, model_directory)
+    # train XGBoost model
+    logger.info("Training XGBoost model...")
+    clf = xgb.train(params = params, 
+                    dtrain = dtrain, 
+                    num_boost_round = 500)
         
     with open(xgb_model.path, "wb") as file_writer:
-        joblib.dump(clf, file_writer)
-        
-    # save XGBoost model to model directory in Azure file share
-    if not os.path.exists(os.path.join(az_mount_path, model_directory)):
-        os.makedirs(os.path.join(az_mount_path, model_directory))    
-    with open(az_model_path, "wb") as file_writer:
-        joblib.dump(clf, file_writer)  
+        joblib.dump(clf, file_writer) 
 
-@component(base_image=intel_xgb_d4p_image)
+@dsl.component(base_image = intel_xgb_d4p_image)
 def convert_xgboost_to_daal4py(
     xgb_model: Input[Model],
-    daal4py_model: Output[Model]
-):
-    
-    """
+    daal4py_model: Output[Model]):
+
+    '''
     Converts XGBoost model to inference-optimized daal4py classifier.
     
     Input Artifacts
@@ -379,9 +318,11 @@ def convert_xgboost_to_daal4py(
     Output Artifacts
     ----------------
     daal4py_model : Model
-        inference-optimized daal4py classifier  
-    """
-    
+        inference-optimized daal4py classifier
+    '''
+
+    import sklearn
+    import xgboost
     import daal4py as d4p
     import joblib
     from loguru import logger
@@ -396,7 +337,7 @@ def convert_xgboost_to_daal4py(
     with open(daal4py_model.path, "wb") as file_writer:
         joblib.dump(daal_model, file_writer)
 
-@component(base_image=intel_xgb_d4p_image)
+@dsl.component(base_image = intel_xgb_d4p_image)
 def daal4py_inference(
     x_test: Input[Dataset],
     y_test: Input[Dataset],
@@ -406,8 +347,9 @@ def daal4py_inference(
     metrics: Output[Metrics]
 ):
     
-    """
-    Computes predictions using the inference-optimized daal4py classifier and evaluates model performance.
+    '''
+    Computes predictions using the inference-optimized daal4py classifier 
+    and evaluates model performance.
     
     Input Artifacts
     ---------------
@@ -426,7 +368,7 @@ def daal4py_inference(
         summary of the precision, recall, F1 score for each class
     metrics : Metrics
         scalar classification metrics containing the model's AUC and accuracy
-    """
+    '''
     
     import daal4py as d4p
     import joblib
@@ -468,13 +410,13 @@ def daal4py_inference(
                                 'y_prob': y_prob})
     predictions.to_csv(prediction_data.path, index = False)
 
-@component(base_image=intel_xgb_d4p_image)
+@dsl.component(base_image = intel_xgb_d4p_image)
 def plot_roc_curve(
     predictions: Input[Dataset],
-    class_metrics: Output[ClassificationMetrics]
+    roc_curve_daal4py: Output[ClassificationMetrics]
 ):
     
-    """
+    '''
     Function to plot Receiver Operating Characteristic (ROC) curve.
     
     Input Artifacts
@@ -484,11 +426,12 @@ def plot_roc_curve(
     
     Output Artifacts
     ----------------
-    class_metrics : ClassificationMetrics
-        classification metrics containing fpr, tpr, and thresholds 
-    """
+    roc_curve_daal4py : ClassificationMetrics
+        classification metrics containing fpr, tpr, and thresholds
+    '''
     
     import pandas as pd
+    from numpy import inf
     
     from sklearnex import patch_sklearn
     patch_sklearn()
@@ -499,71 +442,57 @@ def plot_roc_curve(
     fpr, tpr, thresholds = roc_curve(
         y_true = prediction_data['y_test'], 
         y_score = prediction_data['y_prob'], 
-        pos_label = 1)
-    
-    class_metrics.log_roc_curve(fpr, tpr, thresholds)
+        pos_label = 1)    
+    thresholds[thresholds == inf] = 0
 
+    roc_curve_daal4py.log_roc_curve(fpr, tpr, thresholds)
 
-@dsl.pipeline(
-    pipeline_root = "", 
-    name = "intel-xgboost-daal4py-pipeline", 
-    description = "XGBoost-Daal4py Pipeline"
-)
+@dsl.pipeline
 def intel_xgboost_daal4py_pipeline(
-    az_mount_path: str = "/mnt/azure-file-share",
-    data_directory: str = 'data',
-    data_size: int = 1000000,
-    model_directory: str = 'models',
-    model_name: str = 'XGBoost',
-    continue_training: bool = False
-):
-    
-    """ Loan Default Prediction Pipeline """
-    
+    data_url: str, 
+    data_size: int):
+
     load_data_op = load_data(
-        az_mount_path = az_mount_path,
-        data_directory = data_directory,
-        data_size = data_size
-    ).add_affinity(sgx_node_affinity).add_volume(
-        volume).add_volume_mount(
-        volume_mount).set_display_name('Load data')
+        data_url = data_url, data_size = data_size
+    )
+    kubernetes.add_node_selector(task=load_data_op, label_key='intelvm', label_value='sgx')
     
     create_train_test_set_op = create_train_test_set(
         data = load_data_op.outputs['credit_risk_dataset']
-    ).add_affinity(sgx_node_affinity).set_display_name('Create training and test sets')
+    )
+    kubernetes.add_node_selector(task=create_train_test_set_op, label_key='intelvm', label_value='sgx')
     
     preprocess_features_op = preprocess_features(
         x_train = create_train_test_set_op.outputs['x_train_data'],
         x_test = create_train_test_set_op.outputs['x_test_data']
-    ).add_affinity(sgx_node_affinity).set_display_name('Preprocess features')
+    )
+    kubernetes.add_node_selector(task=preprocess_features_op, label_key='intelvm', label_value='sgx')
     
     train_xgboost_model_op = train_xgboost_model(
-        az_mount_path = az_mount_path,
-        model_directory = model_directory,
-        model_name = model_name,
-        continue_training = continue_training,
-        x_train = preprocess_features_op.outputs['x_train_processed'],
-        y_train = create_train_test_set_op.outputs['y_train_data']
-    ).add_affinity(sgx_node_affinity).add_volume(
-        volume).add_volume_mount(
-        volume_mount).set_display_name('Train XGBoost model')
-    
+        x_train = preprocess_features_op.outputs['x_train_processed'], 
+        y_train = create_train_test_set_op.outputs['y_train_data']        
+    )
+    kubernetes.add_node_selector(task=train_xgboost_model_op, label_key='intelvm', label_value='sgx')
+
     convert_xgboost_to_daal4py_op = convert_xgboost_to_daal4py(
         xgb_model = train_xgboost_model_op.outputs['xgb_model']
-    ).add_affinity(sgx_node_affinity).set_display_name('Convert XGBoost model to Daal4py')
-    
+    )
+    kubernetes.add_node_selector(task=convert_xgboost_to_daal4py_op, label_key='intelvm', label_value='sgx')
+
     daal4py_inference_op = daal4py_inference(
         x_test = preprocess_features_op.outputs['x_test_processed'],
         y_test = create_train_test_set_op.outputs['y_test_data'],
-        daal4py_model = convert_xgboost_to_daal4py_op.outputs['daal4py_model']   
-    ).add_affinity(sgx_node_affinity).set_display_name('Daal4py Inference')
-    
+        daal4py_model = convert_xgboost_to_daal4py_op.outputs['daal4py_model']
+    )
+    kubernetes.add_node_selector(task=daal4py_inference_op, label_key='intelvm', label_value='sgx')
+
     plot_roc_curve_op = plot_roc_curve(
         predictions = daal4py_inference_op.outputs['prediction_data']
-    ).add_affinity(sgx_node_affinity).set_display_name('Plot ROC Curve')
-    
-if __name__ == "__main__":    
-    compiler.Compiler(
-        mode = kfp.dsl.PipelineExecutionMode.V2_COMPATIBLE).compile(
-            pipeline_func = intel_xgboost_daal4py_pipeline,
-            package_path = 'intel-xgboost-daal4py-pipeline.yaml')
+    )
+    kubernetes.add_node_selector(task=plot_roc_curve_op, label_key='intelvm', label_value='sgx')
+
+if __name__ == '__main__':
+    # Compiling the pipeline
+    compiler.Compiler().compile(
+        pipeline_func = intel_xgboost_daal4py_pipeline, 
+        package_path = 'intel-xgboost-daal4py-pipeline-azure.yaml')

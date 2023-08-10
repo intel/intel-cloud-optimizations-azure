@@ -34,8 +34,8 @@ Below is a graph of the full pipeline.
 </p>
 
 The pipeline consists of the following 7 components:  
-- **Load data**: This component loads the `credit_risk_dataset.csv` from the Azure 
-file share and performs synthetic data augmentation.  
+- **Load data**: This component loads the `credit_risk_dataset.csv` from the URL specified 
+and performs synthetic data augmentation.  
 - **Create training and test sets**: This component splits the data into training and test 
 sets, of an approximately 75:25 split for model evaluation.  
 - **Preprocess features**: This component performs data preprocessing of the training and test 
@@ -82,64 +82,9 @@ export LOC=westus
 az group create -n $RG -l $LOC
 ```
 
-### III. Create a File Share
-We will use an [Azure File Share](https://learn.microsoft.com/en-us/azure/storage/files/storage-files-introduction) 
-for our pipeline's data and model object storage. To create the file share, we will first create an Azure Storage 
-Account named `kubeflowstore` using the following command:
+### III. Create a Container Registry
 
-```
-export STORAGE_NAME=kubeflowstore
-
-az storage account create \
---resource-group $RG \
---name $STORAGE_NAME \
---kind StorageV2 \
---sku Standard_LRS \
---enable-large-file-share \
---allow-blob-public-access false
-```
-
-Next, we will create a new file share in our storage account named 
-`kubeflow-file-share` with a quota of 1024 GiB.
-```
-export KUBEFLOW_FILE_SHARE=kubeflow-file-share
-
-az storage share-rm create \
---resource-group $RG \
---storage-account $STORAGE_NAME \
---name $KUBEFLOW_FILE_SHARE \
---quota 1024
-```
-
-To upload the credit risk dataset to the file share, we'll create a new
-directory called `data` using the command below.
-```
-export STORAGE_KEY=$(az storage account keys list -g $RG -n $STORAGE_NAME --query [0].value -o tsv)
-
-az storage directory create \
---account-name $STORAGE_NAME \
---share-name $KUBEFLOW_FILE_SHARE \
---name "data" \
---account-key $STORAGE_KEY 
-```
-
-Now we'll upload the `credit_risk_dataset.csv` to the data directory.
-> **Note**: The credit risk dataset can be downloaded frome Kaggle 
-> [here](https://www.kaggle.com/datasets/laotse/credit-risk-dataset). Before executing 
-> the command below, ensure the `credit_risk_dataset.csv`
-> is located in your current working directory.
-```
-az storage file upload \
---account-name $STORAGE_NAME \
---share-name $KUBEFLOW_FILE_SHARE \
---source "credit_risk_dataset.csv" \
---path "data/credit_risk_dataset.csv" \
---account-key $STORAGE_KEY 
-```
-
-### IV. Create a Container Registry
-
-We'll now create an 
+Next, we'll create an 
 [Azure Container Registry](https://learn.microsoft.com/en-us/azure/container-registry/container-registry-intro) 
 to build, store, and manage the container image for our application. The command below 
 will create a new container registry named `kubeflowregistry`.
@@ -181,8 +126,8 @@ CreatedTime                   ImageName              LastUpdateTime             
 2023-04-24T21:03:51.1741697Z  intel-xgboost-daal4py  2023-04-24T21:03:51.2592323Z  1                kubeflowregistry.azurecr.io  1
 ```
 
-### V. Create an AKS Cluster with Intel® Software Guard Extensions (Intel® SGX) Confidential Computing Nodes
-Now we're ready to deploy our [Azure Kubernetes Service (AKS)](https://learn.microsoft.com/en-us/azure/aks/intro-kubernetes) cluster with confidential computing nodes leveraging [Intel® Software Guard Extensions (Intel® SGX)](https://www.intel.com/content/www/us/en/developer/tools/software-guard-extensions/overview.html) Virtual Machines (VMs). 
+### IV. Create an AKS Cluster with Intel® Software Guard Extensions (Intel® SGX) Confidential Computing Nodes
+Now we're ready to deploy our [Azure Kubernetes Services (AKS)](https://learn.microsoft.com/en-us/azure/aks/intro-kubernetes) cluster with confidential computing nodes leveraging [Intel® Software Guard Extensions (Intel® SGX)](https://www.intel.com/content/www/us/en/developer/tools/software-guard-extensions/overview.html) Virtual Machines (VMs). 
 
 Intel Software Guard Extensions VMs allow you to run sensitive workloads and containers within a hardware-based Trusted Execution Environment (TEE). TEEs allow user-level code from containers to allocate private regions of memory to execute the code with CPU directly. These private memory regions that execute directly with CPU are called enclaves. Enclaves help protect the data confidentiality, data integrity and code integrity from other processes running on the same nodes, as well as Azure operator. These machines are powered by 3rd Generation Intel® Xeon Scalable processors, and use Intel® Turbo Boost Max Technology 3.0 to reach 3.5 GHz.
 
@@ -217,11 +162,19 @@ Your output should be similar to:
 Once the system node pool has been deployed, we'll add the Intel SGX VM node pool to the cluster using an instance of the [DCSv3 series](https://learn.microsoft.com/en-us/azure/virtual-machines/dcv3-series). The name of the confidential node pool is `intelsgx`, which will be referenced when scheduling our pods in the Kubeflow Pipeline.
 
 ```
-az aks nodepool add --resource-group $RG \
+az aks nodepool add \
+--resource-group $RG \
 --name intelsgx \
 --cluster-name $AKS \
+--node-vm-size Standard_DC4s_v3 \
 --node-count 2 \
---node-vm-size Standard_DC4s_v3
+--labels intelvm=sgx
+```
+
+For this node pool, a [Kubernetes Label](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/) has been added. This label will be referenced in the Kubeflow Pipeline to assign the pods to one of the Intel SGX nodes. To verify that the label was successfully added to the nodes, use:
+
+```
+kubectl get nodes --show-labels | grep -e "intelvm=sgx"
 ```
 
 Once the Intel SGX node pool has been added, run the command below to get access credentials to the managed Kubernetes cluster:
@@ -262,55 +215,7 @@ If you see the above node pool and pods running, this means our AKS cluster is n
 ## Install Kubeflow
 
 Once you've set up the Azure resources for the Pipeline, follow the instructions
-to install Kubeflow on the AKS cluster [here](../../README.md#setting-up-kubeflow-on-azure).
-
-[Back to Table of Contents](#table-of-contents)
-
-## Setting up Kubernetes Resources
-After installing Kubeflow, we will configure 
-[Persistent Volume](https://kubernetes.io/docs/concepts/storage/persistent-volumes/) 
-storage for the pipeline using the Azure file share that we created earlier. 
-
-Create a Kubernetes secret containing the Azure storage account name and key:
-```
-kubectl create secret generic azure-secret \
---from-literal azurestorageaccountname=$STORAGE_NAME \
---from-literal azurestorageaccountkey=$STORAGE_KEY \
---type=Opaque 
-```
-
-Change the directory to `kubernetes`:
-```
-cd ../kubernetes/
-```
-
-Create the Persistent Volume and the Persistent Volume Claim:
-```
-kubectl create -f pv-azure.yaml
-kubectl create -f pvc-azure.yaml
-```
-
-Verify that the volume was bound to the claim successfully:
-```
-kubectl get pv pv-azure-file
-```
-
-Your output should look similar to:
-```
-NAME            CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM                                      STORAGECLASS    REASON   AGE
-pv-azure-file   20Gi       RWX            Retain           Bound    kubeflow-user-example-com/pvc-azure-file   azurefile-csi            18d
-```
-
-Verify that the claim was bound to the volume successfully:
-```
-kubectl get pvc pvc-azure-file -n kubeflow-user-example-com
-```
-
-Your output should look similar to:
-```
-NAME             STATUS   VOLUME          CAPACITY   ACCESS MODES   STORAGECLASS    AGE
-pvc-azure-file   Bound    pv-azure-file   20Gi       RWX            azurefile-csi   18d
-```
+[here](../../README.md#setting-up-kubeflow-on-azure) to install Kubeflow on the AKS cluster.
 
 [Back to Table of Contents](#table-of-contents)
 
@@ -322,11 +227,11 @@ The python code for our pipeline is located in the `src` directory. To generate 
 the pipeline, run the following command:
 
 ```
-cd ..
-python3 src/intel_xgboost_daal4py_pipeline.py
+cd src
+python3 intel-xgboost-daal4py-pipeline-azure.py
 ```
 
-You should see a new file named `intel-xgboost-daal4py-pipeline.yaml` in the `XGBoost` directory.
+You should see a new file named `intel-xgboost-daal4py-pipeline-azure.yaml` in the `src` directory.
 
 ### II. Log into the Kubeflow Central Dashboard
 
@@ -339,23 +244,25 @@ You should see a new file named `intel-xgboost-daal4py-pipeline.yaml` in the `XG
 ### III. Run the Pipeline
 1.  Once you have logged into Kubeflow, click on the Pipelines tab from the sidebar 
     menu.
-2.  Click on the Upload Pipeline button in the top right and type in a new name and 
+2.  Click on the Upload Pipeline button in the top right and enter a new name and 
     description for the Pipeline.
 3.  Select Upload a file and navigate to the directory where the 
-    `intel-xgboost-daal4py-pipeline.yaml` is located. Click Create.
-4.  You should be redirected to a graph overview of the pipeline. In the top right,
-    select Create run.
-5.  In the Run parameters section at the bottom, you can review and update the default 
-    values of the pipeline parameters. For this demo, we will use the parameters shown
-    in the image below:
+    `intel-xgboost-daal4py-pipeline-azure.yaml` is located. Click Create.
+4.  You should be redirected to a graph overview of the Pipeline. In the top right,
+    select Create run. 
+5.  In the Run parameters section at the bottom, enter the data size and data url.
+    The dataset can be downloaded from Kaggle
+    [here](https://www.kaggle.com/datasets/laotse/credit-risk-dataset)
+    and hosted on a public URL of your choice.
+6.  Click Start to begin running the Pipeline.  
+7.  When the Pipeline tasks `daal4py-inference` and `plot-roc-curve` are finished 
+    running, click on the Visualization tab of the  `metrics` and `roc_curve_daal4py` 
+    artifacts to review the model performance metrics. You should see a similar graph 
+    as the one below:
 
 <p align="center">
-  <img src="../../../assets/intel-xgb-d4p-pipeline-params.png" alt="Pipeline Params" width="500"/>
+  <img src="../../../assets/intel-xgb-d4p-pipeline-roc-curve.png" alt="ROC Curve" width="500"/>
 </p>
-
-6.  Click Start to begin running the pipeline.  
-7.  When the Pipeline is finished running, check out the **Visualizations** tab for 
-    the `Daal4py Inference` and `Plot ROC Curve` steps to view the model metrics.
 
 [Back to Table of Contents](#table-of-contents)
 
