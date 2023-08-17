@@ -2,17 +2,15 @@
   <img src="../assets/logo-classicblue-800px.png?raw=true" alt="Intel Logo" width="250"/>
 </p>
 
-# Intel® Cloud Optimization Modules for Kubernetes
+# Intel® Cloud Optimization Modules for Microsoft Azure*
 
 © Copyright 2023, Intel Corporation
-## Microsoft Azure
+## XBGoost* Pipeline on Kubernetes*
 
-The Intel® Cloud Optimization Module for Kubernetes* can be used to build and deploy highly available and scalable AI applications on Microsoft Azure. The machine learning component of the module focuses on predicting the probability of a loan default using [Intel® optimizations for XGBoost](https://www.intel.com/content/www/us/en/developer/tools/oneapi/optimization-for-xgboost.html) and [Intel® oneDAL](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onedal.html) to accelerate model training and inference. We also demonstrate how to use incremental training of the XGBoost model as new data becomes available.
-
-The solution architecture uses Docker for application containerization and stores the image in an Azure Container Registry (ACR). The application is then deployed on a cluster managed by Azure Kubernetes Service (AKS). Our cluster runs on confidential computing virtual machines leveraging [Intel® Software Guard Extensions (Intel® SGX)](https://www.intel.com/content/www/us/en/developer/tools/software-guard-extensions/overview.html). We use a mounted Azure File Share for persistent data and model storage. An Azure Load Balancer is provisioned by our Kubernetes service that the client uses to interact with our application.
+The Intel® Cloud Optimization Modules for Microsoft Azure*: XBGoost* Pipeline on Kubernetes* can be used to build and deploy highly available and scalable AI applications on Microsoft Azure. The machine learning component of the module focuses on predicting the probability of a loan default using [Intel® optimizations for XGBoost](https://www.intel.com/content/www/us/en/developer/tools/oneapi/optimization-for-xgboost.html) and [Intel® oneDAL](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onedal.html) to accelerate model training and inference. We also demonstrate how to use incremental training of the XGBoost model as new data becomes available.
 
 ## Table of Contents
-- [Solution Architecture](#solution-architecture) 
+- [Cloud Solution Architecture](#cloud-solution-architecture) 
 - [Loan Default Risk Prediction Application](#loan-default-risk-prediction-application) 
 - [Prerequisites](#prerequisites)
 - [Setting up Azure Resources](#setting-up-azure-resources)
@@ -21,11 +19,15 @@ The solution architecture uses Docker for application containerization and store
 - [Cleaning up Resources](#cleaning-up-resources)
 - [Summary](#summary)
 
-## Solution Architecture
+## Cloud Solution Architecture
+
+This solution architecture uses Docker for application containerization and stores the image in an Azure Container Registry (ACR). The application is then deployed on a cluster managed by Azure Kubernetes Services (AKS). Our cluster runs on confidential computing virtual machines leveraging [Intel® Software Guard Extensions (Intel® SGX)](https://www.intel.com/content/www/us/en/developer/tools/software-guard-extensions/overview.html). We use a mounted Azure File Share for persistent data and model storage. An Azure Load Balancer is provisioned by our Kubernetes service that the client uses to interact with our application.
 
 <p align="center">
-  <img src="../assets/architecture.svg" alt="Solution Architecture"/>
+  <img src="assets/architecture.svg" alt="Solution Architecture"/>
 </p>
+
+[Back to Table of Contents](#table-of-contents)
 
 ## Loan Default Risk Prediction Application
 The application we will be deploying is based on the [Loan Default Risk Prediction AI Reference Kit](https://github.com/oneapi-src/loan-default-risk-prediction). We have refactored the code from this reference solution to be more modular in support of our three main APIs:

@@ -2,35 +2,39 @@
   <img src="../../../assets/logo-classicblue-800px.png?raw=true" alt="Intel Logo" width="250"/>
 </p>
 
-# Intel® Cloud Optimization Modules for Kubeflow 
+# Intel® Cloud Optimization Modules for Microsoft Azure* 
 
 © Copyright 2023, Intel Corporation
 
-## XGBoost Daal4py Kubeflow Pipeline
+## XGBoost* Kubeflow* Pipeline
 
-This reference solution provides an optimized training and inference architecture of 
-an AI model using XGBoost to predict the probability of a loan default from client 
-characteristics and the type of loan obligation. This module enables the use of Intel® 
-optimizations for XGBoost and Intel® daal4py in a Kubeflow Pipeline. It also leverages 
-secure and confidential computing using Intel® Software Guard Extensions virtual 
-machines on an Azure Kubernetes Service (AKS) cluster.
+The Intel® Cloud Optimization Modules for Microsoft Azure*: XGBoost* Kubeflow* Pipeline is designed to facilitate building and deploying accelerated AI applications on [Kubeflow](https://www.kubeflow.org/). Kubeflow is the simple, portable, and scalable Machine Learning toolkit for Kubernetes services. This reference solution provides an optimized training and inference Kubeflow Pipeline using XGBoost to predict the probability of a loan default. The module enables the use of [Intel® Optimizations for XGBoost*](https://www.intel.com/content/www/us/en/developer/tools/oneapi/optimization-for-xgboost.html), [Intel® oneAPI Data Analytics Library (oneDAL)](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onedal.html), and [Intel® Extension for Scikit-Learn*](https://www.intel.com/content/www/us/en/developer/tools/oneapi/scikit-learn.html) in a full end-to-end reference architecture. It also leverages secure and confidential computing using the [Intel® Software Guard Extensions (Intel® SGX)](https://www.intel.com/content/www/us/en/developer/tools/software-guard-extensions/overview.html) virtual machines on an [Azure Kubernetes Services (AKS)](https://azure.microsoft.com/en-us/products/kubernetes-service) cluster.
 
 ## Table of Contents
-- [Solution Overview](#solution-overview)
+- [Cloud Solution Architecture](#cloud-solution-architecture)
+- [Pipeline Overview](#pipeline-overview)
 - [Prerequisites](#prerequisites)
 - [Setting up Azure Resources](#setting-up-azure-resources)
 - [Installing Kubeflow](#install-kubeflow)
-- [Setting up Kubernetes Resources](#setting-up-kubernetes-resources)
 - [Running the Kubeflow Pipeline](#running-the-kubeflow-pipeline)
 - [Cleaning up Resources](#cleaning-up-resources)
 
-## Solution Overview
+## Cloud Solution Architecture
 
-The Kubeflow pipeline we will be deploying is based on the 
-[Loan Default Risk Prediction AI Reference Kit](https://github.com/oneapi-src/loan-default-risk-prediction).
-Below is a graph of the full pipeline.
+This cloud solution utilizes an Azure Kubernetes Services (AKS) cluster, with the central components being the Intel® Software Guard Extensions (Intel® SGX) virtual machines (VMs). Intel Software Guard Extensions VMs allow you to run sensitive workloads and containers within a hardware-based Trusted Execution Environment (TEE). TEEs enable user-level code from containers to allocate private regions of memory to execute the code with CPU directly. These private memory regions that execute directly with CPU are called enclaves. Enclaves help protect the data confidentiality, data integrity and code integrity from other processes running on the same nodes, as well as Azure operator. An Azure Container Registry is attached to the AKS cluster so that the Kubeflow pipeline can build the containerized Python components. These Azure resources are managed in an Azure Resource Group. The Kubeflow software layer is then installed on the AKS cluster. When the pipeline is run, each pipeline pod will be assigned to an Intel SGX node.  
+
 <p align="center">
-  <img src="../../../assets/intel-xgb-d4p-pipeline.png" alt="Intel XGBoost Daal4py Pipeline"/>
+  <img src="assets/intel-xgb-d4p-pipeline-architecture.png" alt="Intel XGBoost Daal4py Pipeline Cloud Architecture"/>
+</p>
+
+[Back to Table of Contents](#table-of-contents)
+
+## Pipeline Overview
+
+This pipeline is derived from the [Loan Default Risk Prediction AI Reference Kit](https://github.com/oneapi-src/loan-default-risk-prediction), built by Intel in collaboration with Accenture*. The code has been enhanced through refactoring to achieve better modularity and suitability for Kubeflow Pipelines. The credit risk data set used in the pipeline is obtained from [Kaggle](https://www.kaggle.com/datasets/laotse/credit-risk-dataset)* and synthetically augmented for testing and benchmarking purposes. Below is a graph of the full XGBoost daal4py Kubeflow Pipeline.
+
+<p align="center">
+  <img src="assets/intel-xgb-d4p-pipeline.png" alt="Intel XGBoost Daal4py Pipeline"/>
 </p>
 
 The pipeline consists of the following 7 components:  
@@ -51,6 +55,8 @@ precision, recall, F1 score for each class, as well as the area under the curve 
 accuracy of the model.  
 - **Plot ROC Curve**: This component performs model validation on the test data 
 and generates a graph of the ROC curve.  
+
+[Back to Table of Contents](#table-of-contents)
 
 ## Prerequisites
 
@@ -261,7 +267,7 @@ You should see a new file named `intel-xgboost-daal4py-pipeline-azure.yaml` in t
     as the one below:
 
 <p align="center">
-  <img src="../../../assets/intel-xgb-d4p-pipeline-roc-curve.png" alt="ROC Curve" width="500"/>
+  <img src="assets/intel-xgb-d4p-pipeline-roc-curve.png" alt="ROC Curve" width="500"/>
 </p>
 
 [Back to Table of Contents](#table-of-contents)

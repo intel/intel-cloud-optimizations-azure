@@ -2,22 +2,24 @@
   <img src="../assets/logo-classicblue-800px.png?raw=true" alt="Intel Logo" width="250"/>
 </p>
 
-# Intel® Cloud Optimization Modules for Kubeflow 
+# Intel® Cloud Optimization Modules for Microsoft Azure* 
 
 © Copyright 2023, Intel Corporation
-## Microsoft Azure
+## Kubeflow* Pipelines
 
-The Intel® Cloud Optimization Modules for Kubeflow* provide a reference solution for 
-building and deploying accelerated AI applications on Kubeflow. The modules are 
-designed to maximize the performance and productivity of industry-leading Python machine 
-learning libraries. This set of reference architectures for Microsoft Azure also take 
-advantage of secure and confidential computing virtual machines leveraging Intel® Software 
-Guard Extensions (Intel® SGX) on the Azure cloud. 
+The Intel® Cloud Optimization Modules for Microsoft Azure*: Kubeflow* Pipelines provide 
+reference solutions for building and deploying accelerated AI applications on 
+[Kubeflow](https://www.kubeflow.org/). Kubeflow is the simple, portable, and scalable 
+Machine Learning toolkit for Kubernetes services. The modules are designed to maximize 
+the performance and productivity of industry-leading Python machine learning libraries. 
+This set of reference architectures for 
+[Microsoft Azure](https://azure.microsoft.com/en-ca) also take advantage of secure 
+and confidential computing virtual machines leveraging 
+[Intel® Software Guard Extensions (Intel® SGX)](https://www.intel.com/content/www/us/en/developer/tools/software-guard-extensions/overview.html) on the Azure cloud. 
 
-Each module or reference architecture includes a complete instruction set, all source 
-code published on GitHub*, and a video walk-through. Below are the Kubeflow Pipelines available 
-for Microsoft Azure. You can check out the full suite of Intel Cloud Optimization Modules with 
-additional resources for other cloud providers like AWS and GCP
+Below are the Kubeflow Pipelines available for Microsoft Azure. You can check out the full 
+suite of Intel Cloud Optimization Modules with additional resources for other cloud 
+providers like AWS and GCP
 [here](https://www.intel.com/content/www/us/en/developer/topic-technology/cloud-optimization.html). 
 
 ## Table of Contents
@@ -27,9 +29,9 @@ additional resources for other cloud providers like AWS and GCP
 - [Install Kubeflow on Azure](#installing-kubeflow-on-azure)
 - [Next Steps](#next-steps)
 
-## Kubeflow Pipelines
+## Pipelines
 
-- **[Loan Default Risk Prediction](pipelines/XGBoost/README.md)**: This reference solution provides an optimized
+- **[XGBoost Kubeflow Pipeline](pipelines/XGBoost/README.md)**: This reference solution provides an optimized
 training and inference architecture of an AI model using XGBoost to predict the probability of a 
 loan default from client characteristics and the type of loan obligation. This module enables the use 
 of Intel® optimizations for XGBoost and Intel® daal4py.
