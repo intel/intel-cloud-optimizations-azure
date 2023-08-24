@@ -103,7 +103,7 @@ in the `hash` value of the configuration file at around line 22.
 > [Istio](https://istio.io/) is used by many Kubeflow components to secure their 
 > traffic, enforce network authorization and implement routing policies.
 
-Navigate to `common/istio-1-16/istio-install/base/patches/service.yaml` and change 
+Navigate to `common/istio-1-17/istio-install/base/patches/service.yaml` and change 
 the `type` to `LoadBalancer` at around line 7.
 
 ```
@@ -118,7 +118,7 @@ spec:
 
 ### III. Disable the AKS admission enforcer from the Istio mutating admission webhook
 
-Navigate to `common/istio-1-16/istio-install/base/install.yaml` and add the following 
+Navigate to `common/istio-1-17/istio-install/base/install.yaml` and add the following 
 annotation at around line 2694.
 
 ```
@@ -135,7 +135,7 @@ metadata:
 ### IV. Configure the Transport Layer Security (TLS) Protocol
 
 Next, we will update the Istio Gateway so that we can access the dashboard over HTTPS.
-Navigate to `common/istio-1-16/kubeflow-istio-resources/base/kf-istio-resources.yaml`. 
+Navigate to `common/istio-1-17/kubeflow-istio-resources/base/kf-istio-resources.yaml`. 
 At the end of the file, at around line 14, paste the following:
 
 ```
