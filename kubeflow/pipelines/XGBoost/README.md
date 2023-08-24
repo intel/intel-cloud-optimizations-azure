@@ -177,18 +177,18 @@ az aks nodepool add \
 --labels intelvm=sgx
 ```
 
-For this node pool, a [Kubernetes Label](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/) has been added. This label will be referenced in the Kubeflow Pipeline to assign the pods to one of the Intel SGX nodes. To verify that the label was successfully added to the nodes, use:
+Once the Intel SGX node pool has been added, obtain the cluster access credentials and merge them into your local `.kube/config` file using the command below:
+```
+az aks get-credentials -n $AKS -g $RG
+```
+
+A [Kubernetes Label](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/) has been added to the Intel SGX node pool. This label will be referenced in the Kubeflow Pipeline to assign the pods to one of the Intel SGX nodes. To verify that the label was successfully added to the nodes, use:
 
 ```
 kubectl get nodes --show-labels | grep -e "intelvm=sgx"
 ```
 
-Once the Intel SGX node pool has been added, run the command below to get access credentials to the managed Kubernetes cluster:
-```
-az aks get-credentials -n $AKS -g $RG
-```
-
-To verify that the node pool has been created properly and the SGX-related DaemonSets are running, use the following commands:
+To verify that the confidential computing node pool has been created properly and the SGX-related DaemonSets are running, use the following commands:
 ```
 kubectl config current-context
 kubectl get nodes
