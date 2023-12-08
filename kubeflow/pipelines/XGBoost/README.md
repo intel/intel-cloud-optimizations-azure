@@ -227,10 +227,10 @@ Once you've set up the Azure resources for the Pipeline, follow the instructions
 
 ## Running the Kubeflow Pipeline
 
-### I. Create the Pipeline yaml file
+### I. Create the Pipeline Script
 
-The python code for our pipeline is located in the `src` directory. To generate the yaml file for 
-the pipeline, run the following command:
+Now we will generate the pipeline file from the python script in the `src` directory.
+Before generating the pipeline file, ensure you have installed `kfp` version 2.0.1 or above.
 
 ```
 cd src

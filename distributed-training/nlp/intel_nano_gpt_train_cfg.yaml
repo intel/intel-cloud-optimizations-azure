@@ -1,0 +1,28 @@
+data_dir: ./data/openwebtext
+
+block_size: 1024
+  
+optimizer_config:
+  learning_rate: 6e-4
+  weight_decay: 1e-1
+  beta1: 0.9
+  beta2: 0.95
+
+trainer_config:
+  device: cpu
+  mixed_precision: bf16          # fp16 or bf16
+  eval_interval: 5               # how frequently to perform evaluation
+  log_interval: 1                # how frequently to print logs
+  eval_iters: 2                  # how many iterations to perform during evaluation
+  eval_only: False
+  batch_size: 32
+  max_iters: 10                  # total iterations
+  model_path: ckpt.pt 
+  snapshot_path: snapshot.pt
+  gradient_accumulation_steps: 2 
+  grad_clip: 1.0
+  decay_lr: True
+  warmup_iters: 2
+  lr_decay_iters: 10
+  max_lr: 6e-4
+  min_lr: 6e-5

@@ -6,8 +6,10 @@
 
 © Copyright 2023, Intel Corporation
 
-This repository contains reference architectures designed to facilitate building and deploying scalable, cloud-native applications that are optimized for use on the Azure cloud.
+This repository contains reference architectures designed to facilitate building and deploying efficient and scalable cloud-native applications that are optimized for use on the Azure cloud.
 
 ## Modules
-- **[XGBoost* Pipeline on Kubernetes*](kubernetes/README.md)**
+- **[nanoGPT Distributed Training](distributed-training/nlp/README.md)**
+- **[Stable Diffusion Distributed Training](distributed-training/stable-diffusion/README.md)**
 - **[XGBoost* Kubeflow* Pipeline](kubeflow/pipelines/XGBoost/README.md)**
+- **[XGBoost* Pipeline on Kubernetes*](kubernetes/README.md)**
