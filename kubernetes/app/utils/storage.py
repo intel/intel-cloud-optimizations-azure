@@ -35,9 +35,9 @@ class AZStore:
         log.info(f'Successfully loaded model from Azure file share ' \
                  f'in the {self.model_directory} directory.')
         
-        log.info(f'Converting XGBoost model to Daal4py.')
-        daal_model = d4p.get_gbt_model_from_xgboost(model)
-        return daal_model
+        log.info(f'Converting XGBoost model to daal4py for optimized inference.')
+        d4p_model = d4p.mb.convert_model(model)
+        return d4p_model
     
     def save_model(self, model: Any) -> None:
         

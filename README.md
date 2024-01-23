@@ -4,7 +4,7 @@
 
 # Intel® Cloud Optimization Modules for Microsoft Azure*
 
-© Copyright 2023, Intel Corporation
+© Copyright 2024, Intel Corporation
 
 This repository contains reference architectures designed to facilitate building and deploying efficient and scalable cloud-native applications that are optimized for use on the Azure cloud.
 

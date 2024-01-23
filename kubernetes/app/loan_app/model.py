@@ -32,7 +32,7 @@ class Model():
             continue_training: bool = False,
             size: int = 4000000):
         
-        """Class to manage the training and validation of XGBoost and Daal4Py Models.
+        """Class to manage the training and validation of XGBoost and daal4py models.
 
         Parameters
         ----------
@@ -65,7 +65,7 @@ class Model():
         self.y_train = []
         self.y_test = []
         self.X_test = []
-        self.DMatrix = []
+        self.dtrain = []
     
     def load_data(self):
         
@@ -85,7 +85,7 @@ class Model():
         log.info('Successfully loaded data from Azure file share '\
                  f'in the {self.data_directory} directory.')
         
-        self.DMatrix = xgb.DMatrix(self.X_train.values, self.y_train.values)
+        self.dtrain = xgb.DMatrix(self.X_train.values, self.y_train.values)
 
     def train(self):
 
@@ -104,7 +104,7 @@ class Model():
         if self.continue_training == False or self.continue_training == None:
             log.info(f"Training initial {self.model_name} model")
             self.clf = xgb.train(params=params, 
-                                 dtrain=self.DMatrix, 
+                                 dtrain=self.dtrain, 
                                  num_boost_round=500)
         else:
             log.info(f"Loading {self.model_name} model from {self.model_directory} directory")
@@ -113,7 +113,7 @@ class Model():
                 model = joblib.load(model_path)
                 log.info(f"Continuing {self.model_name} training")
                 self.clf  = xgb.train(
-                    params=params, dtrain=self.DMatrix, xgb_model=model, num_boost_round=500)
+                    params=params, dtrain=self.dtrain, xgb_model=model, num_boost_round=500)
             except:
                 print(f"{self.model_name} model not found")
 
@@ -130,16 +130,10 @@ class Model():
                 'support' (dict): A dictionary of support values, with keys 'Non-Default' and 'Default'.
                 'auc' (float): The area under the receiver operating characteristic curve (AUC).
         """
-        daal_model = self.store.load_model()
+        d4p_model = self.store.load_model()
 
-        y_hat = (
-            d4p.gbt_classification_prediction(
-                nClasses=2, 
-                resultsToEvaluate="computeClassProbabilities"
-            )
-            .compute(self.X_test, daal_model)
-            .probabilities[:,1]
-        )
+        y_hat = d4p_model.predict_proba(X_test)[:,1]
+        
         auc = roc_auc_score(self.y_test, y_hat)
         results = classification_report(
             self.y_test,

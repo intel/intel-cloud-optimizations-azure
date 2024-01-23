@@ -4,7 +4,7 @@
 
 # Intel® Cloud Optimization Modules for Microsoft Azure* 
 
-© Copyright 2023, Intel Corporation
+© Copyright 2024, Intel Corporation
 ## Kubeflow* Pipelines
 
 The Intel® Cloud Optimization Modules for Microsoft Azure*: Kubeflow* Pipelines provide 

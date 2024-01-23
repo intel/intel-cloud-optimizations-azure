@@ -4,7 +4,7 @@
 
 # Intel® Cloud Optimization Modules for Microsoft Azure*
 
-© Copyright 2023, Intel Corporation
+© Copyright 2024, Intel Corporation
 ## XBGoost* Pipeline on Kubernetes*
 
 The Intel® Cloud Optimization Modules for Microsoft Azure*: XBGoost* Pipeline on Kubernetes* can be used to build and deploy highly available and scalable AI applications on Microsoft Azure. The machine learning component of the module focuses on predicting the probability of a loan default using [Intel® optimizations for XGBoost](https://www.intel.com/content/www/us/en/developer/tools/oneapi/optimization-for-xgboost.html) and [Intel® oneDAL](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onedal.html) to accelerate model training and inference. We also demonstrate how to use incremental training of the XGBoost model as new data becomes available.

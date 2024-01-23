@@ -4,7 +4,7 @@
 
 # Intel® Optimized Cloud Modules for Microsoft Azure* 
 
-© Copyright 2023, Intel Corporation
+© Copyright 2024, Intel Corporation
 
 ## Stable Diffusion Distributed Training
 
@@ -186,7 +186,7 @@ Upon successful completion of the `stable-diffusion-env` make target, you should
 
 To optimize the fine-tuning process, we will use the [Intel® Extension for PyTorch*](https://intel.github.io/intel-extension-for-pytorch/). The Intel Extension for PyTorch elevates PyTorch performance on Intel hardware with the integration of the newest features and optimizations that have not yet been incorporated into the open source distribution. This extension efficiently utilizes Intel hardware capabilities, such as [Intel® Advanced Matrix Extensions (Intel® AMX)](https://www.intel.com/content/www/us/en/products/docs/accelerator-engines/advanced-matrix-extensions/overview.html) and [Intel® Advanced Vector Extensions 512 (Intel® AVX-512)](https://www.intel.com/content/www/us/en/architecture-and-technology/avx-512-overview.html) instruction sets on Intel Xeon CPUs.
 
-The optimizations for PyTorch have been added to the `textual_inversion.py` script included in this repository. To enable the accelerations, simply apply the `optimize` function to the model object shown in the code snippet below:
+The optimizations for PyTorch have been added to the `textual_inversion_intel.py` script included in this repository. To enable the accelerations, simply apply the `optimize` function to the model object shown in the code snippet below:
 
 ```python
 unet.to(accelerator.device, dtype=weight_dtype)
@@ -445,7 +445,7 @@ Finally, it's time to run the fine-tuning process on multi-CPU setup. The follow
 export MODEL_NAME="runwayml/stable-diffusion-v1-5"
 export DATA_DIR="dicoo"
 
-mpirun -f ~/hosts -n 3 -ppn 1 accelerate launch textual_inversion.py --pretrained_model_name_or_path=$MODEL_NAME --train_data_dir=$DATA_DIR --learnable_property="object"   --placeholder_token="<dicoo>" --initializer_token="toy" --resolution=512  --train_batch_size=1  --seed=7  --gradient_accumulation_steps=1 --max_train_steps=30 --learning_rate=2.0e-03 --scale_lr --lr_scheduler="constant" --lr_warmup_steps=0 --output_dir=./textual_inversion_output --mixed_precision bf16 --save_as_full_pipeline
+mpirun -f ~/hosts -n 3 -ppn 1 accelerate launch textual_inversion_intel.py --pretrained_model_name_or_path=$MODEL_NAME --train_data_dir=$DATA_DIR --learnable_property="object"   --placeholder_token="<dicoo>" --initializer_token="toy" --resolution=512  --train_batch_size=1  --seed=7  --gradient_accumulation_steps=1 --max_train_steps=30 --learning_rate=2.0e-03 --scale_lr --lr_scheduler="constant" --lr_warmup_steps=0 --output_dir=./textual_inversion_output --mixed_precision bf16 --save_as_full_pipeline
 ```
 
 Some notes on the arguments for `mpirun` to consider:
@@ -464,7 +464,7 @@ Some notes on the arguments for `mpirun` to consider:
 - `--lr_scheduler`: The scheduler type to use. Choose between `linear`, `cosine`, `cosine_with_restarts`, `polynomial`, `constant`, `constant_with_warmup`.
 - `--lr_warmup_steps`: Number of steps for the warmup in the `lr_scheduler`.
 - `--output_dir`: The output directory where the model predictions and checkpoints will be written.
-- `--mixed_precision`: Whether to use mixed precision. Choose between `bf16` (bfloat16) and `fp16`. To use `bf16` requires PyTorch >= 1.10 and an Nvidia Ampere GPU.
+- `--mixed_precision`: Whether to use mixed precision. 
 - `--save_as_full_pipeline`: Save the complete stable diffusion pipeline.
 
 [Back to Table of Contents](#table-of-contents)

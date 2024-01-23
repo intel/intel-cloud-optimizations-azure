@@ -321,8 +321,6 @@ def convert_xgboost_to_daal4py(
         inference-optimized daal4py classifier
     '''
 
-    import sklearn
-    import xgboost
     import daal4py as d4p
     import joblib
     from loguru import logger
@@ -330,12 +328,12 @@ def convert_xgboost_to_daal4py(
     with open(xgb_model.path, "rb") as file_reader:
         clf = joblib.load(file_reader)
         
-    logger.info("Converting XGBoost model to Daal4py...")
-    daal_model = d4p.get_gbt_model_from_xgboost(clf)
+    logger.info("Converting XGBoost model to daal4py...")
+    d4p_model = d4p.mb.convert_model(clf)
     logger.info("Done!")
     
     with open(daal4py_model.path, "wb") as file_writer:
-        joblib.dump(daal_model, file_writer)
+        joblib.dump(d4p_model, file_writer)
 
 @dsl.component(base_image = intel_xgb_d4p_image)
 def daal4py_inference(
@@ -382,32 +380,27 @@ def daal4py_inference(
     y_test = pd.read_csv(y_test.path, header = None)
     
     with open(daal4py_model.path, "rb") as file_reader:
-        daal_model = joblib.load(file_reader)
-    
-    daal_prediction = d4p.gbt_classification_prediction(
-            nClasses = 2, 
-            resultsToEvaluate = "computeClassLabels|computeClassProbabilities"
-        ).compute(X_test, daal_model)
+        d4p_model = joblib.load(file_reader)
         
-    y_pred = daal_prediction.prediction
-    y_prob = daal_prediction.probabilities[:,1]
+    d4p_predictions = d4p_model.predict(X_test)
+    d4p_probabilities = d4p_model.predict_proba(X_test)[:,1]
     
     results = classification_report(
-        y_test, y_pred,
+        y_test, d4p_predictions,
         target_names = ["Non-Default", "Default"],
         output_dict = True
     )
     results = pd.DataFrame(results).transpose()
     results.to_csv(report.path)
     
-    auc = roc_auc_score(y_test, y_prob)
+    auc = roc_auc_score(y_test, d4p_probabilities)
     metrics.log_metric('AUC', auc)
     
-    accuracy = (accuracy_score(y_test, y_pred)*100)
+    accuracy = (accuracy_score(y_test, d4p_predictions)*100)
     metrics.log_metric('Accuracy', accuracy)
     
-    predictions = pd.DataFrame({'y_test': y_test.values.flatten(), 
-                                'y_prob': y_prob})
+    predictions = pd.DataFrame({'ground_truth': y_test.values.flatten(), 
+                                'probability_score': d4p_probabilities})
     predictions.to_csv(prediction_data.path, index = False)
 
 @dsl.component(base_image = intel_xgb_d4p_image)
@@ -440,8 +433,8 @@ def plot_roc_curve(
     prediction_data = pd.read_csv(predictions.path)
 
     fpr, tpr, thresholds = roc_curve(
-        y_true = prediction_data['y_test'], 
-        y_score = prediction_data['y_prob'], 
+        y_true = prediction_data['ground_truth'], 
+        y_score = prediction_data['probability_score'], 
         pos_label = 1)    
     thresholds[thresholds == inf] = 0
 

@@ -65,24 +65,16 @@ def pred(data: object,
         az_file_path=az_file_path, 
         model_directory=model_directory,
         model_name=model_name)
-    daal_model = model_store.load_model()
+    d4p_model = model_store.load_model()
 
-    # daal model inference
-    log.info("Starting Daal4Py Inference")
-    daal_prediction = (
-        d4p.gbt_classification_prediction(
-            nClasses=2, 
-            resultsToEvaluate="computeClassProbabilities"
-        )
-        .compute(data, daal_model)
-        .probabilities[:,1]
-    )
-
+    # optimized model inference
+    log.info("Starting daal4py inference")
+    d4p_probabilities = d4p_model.predict_proba(data)[:,1]
     log.info("Inference Complete")
     
     log.info("Exporting Predictions")
     predictions = pd.DataFrame(columns=["Probability","Prediction"])
-    for i, probability in enumerate(daal_prediction):
+    for i, probability in enumerate(d4p_probabilities):
         predictions.loc[i,"Probability"] = probability
         predictions.loc[i,"Prediction"] = "True" if probability > 0.5 else "False"
     
